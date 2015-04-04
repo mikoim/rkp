@@ -1,5 +1,6 @@
 import re
 import unicodedata
+
 import urllib.parse
 
 import math
@@ -10,6 +11,12 @@ import httplib2
 
 
 class Course:
+    @staticmethod
+    def __safe_float(data):
+        if data:
+            return float(data)
+        return data
+
     def __init__(self, list_data):
         if len(list_data) != 16:
             raise SyntaxError('column number is not 16')
@@ -47,19 +54,10 @@ class Course:
         self.class_no = list_data[5]
 
         # 担当者
-        self.professors = re.split('<br>|<br/>', list_data[6])
+        self.professors = set(re.split('<br>|<br/>', list_data[6]))
 
-        # 登録者数
-        if list_data[7]:
-            self.student = int(list_data[7])
-        else:
-            self.student = None
-
-        # 成績評価, 評点平均値
-        if None in list_data[7:14]:
-            self.score = [None] * 8
-        else:
-            self.score = list(map(float, list_data[7:14]))
+        # 登録者数, 成績評価, 評点平均値
+        self.score = list(map(self.__safe_float, list_data[7:15]))
 
         # 備考
         self.dummy = list_data[15]
@@ -67,7 +65,7 @@ class Course:
     def dump(self):
         print(self.year, self.code, self.season_id, self.name, self.class_no)
         print(self.professors)
-        print(self.student, self.score)
+        print(self.score)
         print(self.syllabus)
         print('----------')
 
@@ -155,8 +153,8 @@ class Crawler:
             page += 1
 
     def __insert(self, course, faculty):
-        sql_insert_course = 'INSERT INTO course VALUES (NULL, %s, %s, %s, %s, %s, %s, %s);'
-        sql_insert_score = 'INSERT INTO score VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s);'
+        sql_insert_course = 'INSERT INTO course VALUES (NULL, %s, %s, %s, %s, %s, %s);'
+        sql_insert_score = 'INSERT INTO score VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s);'
         sql_insert_professor = 'INSERT INTO professor VALUES (NULL, %s);'
         sql_insert_professor_relationship = 'INSERT INTO professor_relationship VALUES (%s, %s);'
         sql_select_professor = 'SELECT * FROM professor WHERE name = %s;'
@@ -164,14 +162,14 @@ class Crawler:
         faculty_id = [y for y in self.faculty if faculty == y[1]][0][0]
 
         self.cursor.execute(sql_insert_course, (
-            faculty_id, course.code, course.season_id, course.name, course.class_no, course.student, course.syllabus
+            faculty_id, course.code, course.season_id, course.name, course.class_no, course.syllabus
         ))
 
         course_id = self.cursor.lastrowid
 
         self.cursor.execute(sql_insert_score, (
             course_id, course.score[0], course.score[1], course.score[2], course.score[3], course.score[4],
-            course.score[5], course.score[6], 0
+            course.score[5], course.score[6], course.score[7], 0
         ))
 
         professors_id = []
