@@ -38,7 +38,7 @@ class Course:
         link = soup.find('a')
         if link:
             self.syllabus = link['href']
-            self.name = link.string
+            self.name = str(link.string)
         else:
             self.syllabus = None
             self.name = list_data[4]
