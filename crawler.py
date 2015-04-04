@@ -153,7 +153,7 @@ class Crawler:
             page += 1
 
     def __insert(self, course, faculty):
-        sql_insert_course = 'INSERT INTO course VALUES (NULL, %s, %s, %s, %s, %s, %s);'
+        sql_insert_course = 'INSERT INTO course VALUES (NULL, %s, %s, %s, %s, %s, %s, %s);'
         sql_insert_score = 'INSERT INTO score VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s);'
         sql_insert_professor = 'INSERT INTO professor VALUES (NULL, %s);'
         sql_insert_professor_relationship = 'INSERT INTO professor_relationship VALUES (%s, %s);'
@@ -162,7 +162,7 @@ class Crawler:
         faculty_id = [y for y in self.faculty if faculty == y[1]][0][0]
 
         self.cursor.execute(sql_insert_course, (
-            faculty_id, course.code, course.season_id, course.name, course.class_no, course.syllabus
+            faculty_id, course.year, course.code, course.season_id, course.name, course.class_no, course.syllabus
         ))
 
         course_id = self.cursor.lastrowid
