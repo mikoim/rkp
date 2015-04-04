@@ -51,7 +51,10 @@ class Course:
         self.professors = re.split('<br>|<br/>', list_data[6])
 
         # 登録者数
-        self.students = int(list_data[7])
+        if list_data[7]:
+            self.students = int(list_data[7])
+        else:
+            self.students = None
 
         # 成績評価, 評点平均値
         if None in list_data[7:14]:
@@ -138,7 +141,7 @@ class Crawler:
             if max_page < page:
                 break
 
-            print(page, faculty, year)
+            print('\t' + ','.join([faculty, str(year), str(page)]))
 
             ret = self.__fetch(faculty, year, page)
             if ret:
@@ -164,7 +167,17 @@ class Crawler:
 def main():
     c = Crawler()
 
-    c.fetch('010', '2004')
+    faculty = {"010": "神学部", "020": "文学部", "030": "法学部", "040": "経済学部", "050": "商学部", "070": "政策学部",
+               "080": "文化情報学部", "090": "社会学部", "0E0": "生命医科学部", "0F0": "スポーツ健康科学部", "060": "理工学部",
+               "0H0": "心理学部", "0J0": "グローバル・コミュニケーション学部", "0K0": "国際教育インスティテュート",
+               "0M0": "グローバル地域文化学部", "200": "語学科目", "300": "保健体育科目", "400": "留学生科目",
+               "100": "全学共通教養教育科目"}
+
+    for key, value in faculty.items():
+        print('\t\t' + value)
+
+        for year in range(2004, 2015):
+            c.fetch(key, year)
 
 
 if __name__ == "__main__":
