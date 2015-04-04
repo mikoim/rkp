@@ -1,8 +1,13 @@
 import re
 import unicodedata
 
+import urllib.parse
+
+import math
+
 import mysql.connector
 from bs4 import BeautifulSoup
+import httplib2
 
 
 class Course:
@@ -62,21 +67,84 @@ class Course:
         print(self.professors)
         print(self.students, self.score)
         print(self.syllabus)
+        print('----------')
 
 
 class Crawler:
     def __init__(self):
         self.regex = re.compile('<td.+?>(.+?)</td>', flags=re.DOTALL)
         self.cnx = mysql.connector.connect(database='rkp', user='rkp', password='UBFVVPNAGQKqAfNr')
+        self.http = httplib2.Http(cache='.cache')
 
-    def do(self):
-        soup = BeautifulSoup(open('sample.html'), "html5lib")
+    def __fetch(self, faculty, year, page):
+        if faculty == '060':
+            parm1 = '0G0'
+        else:
+            parm1 = 'ZZZ'
+
+        response, content = self.http.request(
+            'http://duet.doshisha.ac.jp/info/GPA', method='POST',
+            headers={
+                'User-Agent': 'Mozilla/4.0 (compatible; MSIE 4.0; MSN 2.5; Windows 95)',
+                'Referer': 'http://duet.doshisha.ac.jp/info/GPA',
+                'Content-type': 'application/x-www-form-urlencoded'
+            },
+            body=urllib.parse.urlencode({
+                'furiwakeid': 'GP1001',  # Fix 未使用
+                'gakubuKenkyuka1': faculty,  # Var 学部: 010, 020, ...
+                'hOffSet': (page - 1) * 50,  # Var オフセット: 0, 50, 100, ...
+                'hQueryNo': '1',  # Fix 未使用
+                'languageCode': 'ja',  # Fix 言語
+                'pageNo': page,  # Var ページ番号: 1, 2, 3, ...
+                'rowCount': '50',  # Fix 項目数
+                'search_term0': '',  # Fix 検索ワード
+                'search_term2': year,  # Var 開講年度: 2004, 2005, ..., 2014
+                'search_term4': faculty,  # Var 学部: 010, 020, ...
+                'search_term4_2': parm1,  # Var 理工学部 0G0, 他 ZZZ
+                'search_term6': '12',  # Fix 課程
+                'search_term8': '',  # Fix 未使用
+                'toEmpty0': '1',  # Fix 検索ワードが空白の場合は1
+                'toEmpty4': '0'  # Fix 学部が選択されている場合は0
+            })
+        )
+
+        soup = BeautifulSoup(content.decode('Shift_JIS'), "html5lib")
+
+        with open('debug.html', mode='w+', encoding='Shift_JIS') as tmp:
+            tmp.write(content.decode('Shift_JIS'))
 
         raw = soup.find('table', width="95%").find('tbody').find_all('tr')
+        raw_max_page = soup.find(attrs={"name": "KekkaMax"}).get('value')
+
+        if raw_max_page:
+            max_page = math.ceil(int(raw_max_page) / 50)
+        else:
+            max_page = None
 
         for x in raw[2:]:
-            test = Course([self.normalize(self.regex.match(str(y)).group(1)) for y in x.find_all('td')])
-            test.dump()
+            try:
+                test = Course([self.normalize(self.regex.match(str(y)).group(1)) for y in x.find_all('td')])
+                print(','.join([test.code, test.name]))
+            except SyntaxError:
+                print(x)
+
+        return max_page
+
+    def fetch(self, faculty, year):
+        page = 1
+        max_page = 2
+
+        while True:
+            if max_page < page:
+                break
+
+            print(page, faculty, year)
+
+            ret = self.__fetch(faculty, year, page)
+            if ret:
+                max_page = ret
+
+            page += 1
 
     @staticmethod
     def normalize(t):
@@ -95,7 +163,8 @@ class Crawler:
 
 def main():
     c = Crawler()
-    c.do()
+
+    c.fetch('010', '2004')
 
 
 if __name__ == "__main__":
