@@ -4,6 +4,7 @@ import unicodedata
 import urllib.parse
 
 import math
+from collections import OrderedDict
 
 import mysql.connector
 from bs4 import BeautifulSoup
@@ -111,10 +112,12 @@ class Crawler:
             })
         )
 
-        soup = BeautifulSoup(content.decode('Shift_JIS'), "html5lib")
+        html = content.decode('Shift_JIS')
 
-        with open('debug.html', mode='w+', encoding='Shift_JIS') as tmp:
-            tmp.write(content.decode('Shift_JIS'))
+        soup = BeautifulSoup(html, "html5lib")
+
+        if '入力された検索条件に該当する情報はありません。' in html:
+            return -1
 
         raw = soup.find('table', width="95%").find('tbody').find_all('tr')
         raw_max_page = soup.find(attrs={"name": "KekkaMax"}).get('value')
@@ -126,10 +129,11 @@ class Crawler:
 
         for x in raw[2:]:
             try:
-                test = Course([self.normalize(self.regex.match(str(y)).group(1)) for y in x.find_all('td')])
-                print(','.join([test.code, test.name]))
+                course = Course([self.normalize(self.regex.match(str(y)).group(1)) for y in x.find_all('td')])
+                self.__insert(course, faculty)
             except SyntaxError:
-                print(x)
+                with open('debug.html', mode='w+', encoding='Shift_JIS') as tmp:
+                    tmp.write(html)
 
         return max_page
 
@@ -149,6 +153,14 @@ class Crawler:
 
             page += 1
 
+    def __insert(self, course, faculty):
+        sql_insert_course = 'INSERT INTO course VALUES (NULL, %d, %s, %d, %s, %s, %d);'
+        sql_insert_score = 'INSERT INTO score VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);'
+        sql_insert_professor = 'INSERT INTO professor VALUES (?, ?);'
+        sql_insert_professor_relationship = 'INSERT INTO professor_relationship VALUES (?, ?);'
+
+        sql_select_professor = 'SELECT * FROM professor WHERE name = ?;'
+
     @staticmethod
     def normalize(t):
         t = t.replace('\n', '')
@@ -167,11 +179,13 @@ class Crawler:
 def main():
     c = Crawler()
 
-    faculty = {"010": "神学部", "020": "文学部", "030": "法学部", "040": "経済学部", "050": "商学部", "070": "政策学部",
-               "080": "文化情報学部", "090": "社会学部", "0E0": "生命医科学部", "0F0": "スポーツ健康科学部", "060": "理工学部",
-               "0H0": "心理学部", "0J0": "グローバル・コミュニケーション学部", "0K0": "国際教育インスティテュート",
-               "0M0": "グローバル地域文化学部", "200": "語学科目", "300": "保健体育科目", "400": "留学生科目",
-               "100": "全学共通教養教育科目"}
+    faculty = OrderedDict([
+        ("010", "神学部"), ("020", "文学部"), ("030", "法学部"), ("040", "経済学部"), ("050", "商学部"), ("070", "政策学部"),
+        ("080", "文化情報学部"), ("090", "社会学部"), ("0E0", "生命医科学部"), ("0F0", "スポーツ健康科学部"),
+        ("060", "理工学部"), ("0H0", "心理学部"), ("0J0", "グローバル・コミュニケーション学部"),
+        ("0K0", "国際教育インスティテュート"), ("0M0", "グローバル地域文化学部"), ("200", "語学科目"), ("300", "保健体育科目"),
+        ("400", "留学生科目"), ("100", "全学共通教養教育科目")
+    ])
 
     for key, value in faculty.items():
         print('\t\t' + value)
