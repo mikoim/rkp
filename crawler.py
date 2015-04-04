@@ -1,81 +1,101 @@
 import re
 import unicodedata
+
 import mysql.connector
-
 from bs4 import BeautifulSoup
-
-
-regex = re.compile('<td.+?>(.+?)</td>', flags=re.DOTALL)
-cnx = mysql.connector.connect(database='rkp', user='rkp', password='UBFVVPNAGQKqAfNr')
 
 
 class Course:
     def __init__(self, list_data):
-        self.year = list_data[0]  # 年度
-        self.dummy = list_data[1]  # 課程
-        self.code = list_data[2]  # 科目コード
-        self.season = list_data[3]  # 開講期間
-        self.name = list_data[4]  # 開講科目名
-        self.class_no = list_data[5]  # クラス
-        self.professors = list_data[6]  # 担当者
-        self.students = int(list_data[7])  # 登録者数
-        self.score = Score(list_data[7:14])  # 成績評価, 評点平均値
-        self.dummy = list_data[15]  # 備考
+        if len(list_data) != 16:
+            raise SyntaxError('column number is not 16')
+
+        # 年度
+        self.year = int(list_data[0])
+
+        # 課程
+        self.dummy = list_data[1]
+
+        # 科目コード
+        self.code = list_data[2]
+
+        # 開講期間
+        if list_data[3] == '春':
+            self.season = 1
+        elif list_data[3] == '秋':
+            self.season = 2
+        elif list_data[3] == '春秋':
+            self.season = 3
+        else:
+            raise Exception('unknown season: {:s}'.format(list_data[3]))
+
+        # 開講科目名
+        soup = BeautifulSoup(list_data[4], "html5lib")
+        link = soup.find('a')
+        if link:
+            self.syllabus = link['href']
+            self.name = link.string
+        else:
+            self.syllabus = None
+            self.name = list_data[4]
+
+        # クラス
+        self.class_no = list_data[5]
+
+        # 担当者
+        self.professors = re.split('<br>|<br/>', list_data[6])
+
+        # 登録者数
+        self.students = int(list_data[7])
+
+        # 成績評価, 評点平均値
+        if None in list_data[7:14]:
+            self.score = [None] * 8
+        else:
+            self.score = list(map(float, list_data[7:14]))
+
+        # 備考
+        self.dummy = list_data[15]
+
+    def dump(self):
+        print(self.year, self.code, self.season, self.name, self.class_no)
+        print(self.professors)
+        print(self.students, self.score)
+        print(self.syllabus)
 
 
-class Score:
-    def __init__(self, count_students, list_score):
-        if len(list_score) != 7:
-            raise Exception('unexpected data')
+class Crawler:
+    def __init__(self):
+        self.regex = re.compile('<td.+?>(.+?)</td>', flags=re.DOTALL)
+        self.cnx = mysql.connector.connect(database='rkp', user='rkp', password='UBFVVPNAGQKqAfNr')
 
-        self.__data = list(map(float, list_score))
+    def do(self):
+        soup = BeautifulSoup(open('sample.html'), "html5lib")
 
-    def get_a(self):
-        return self.__data[0]
+        raw = soup.find('table', width="95%").find('tbody').find_all('tr')
 
-    def get_b(self):
-        return self.__data[1]
+        for x in raw[2:]:
+            test = Course([self.normalize(self.regex.match(str(y)).group(1)) for y in x.find_all('td')])
+            test.dump()
 
-    def get_c(self):
-        return self.__data[2]
+    @staticmethod
+    def normalize(t):
+        t = t.replace('\n', '')
 
-    def get_d(self):
-        return self.__data[3]
+        while "  " in t:
+            t = t.replace('  ', ' ')
 
-    def get_f(self):
-        return self.__data[4]
+        t = unicodedata.normalize('NFKC', t)
 
-    def get_average(self):
-        return self.__data[5]
+        if t == '<br/>':
+            t = None
 
-    def __str__(self):
-        for f in self.__data:
-            print(f)
-
-
-def normalize(t):
-    t = t.replace('\n', '')
-
-    while "  " in t:
-        t = t.replace('  ', ' ')
-
-    t = unicodedata.normalize('NFKC', t)
-
-    if t == '<br/>':
-        t = None
-
-    return t
+        return t
 
 
 def main():
-    soup = BeautifulSoup(open('sample.html'), "html5lib")
-
-    raw = soup.find_all('tbody')[6].find_all('tr')
-
-    for x in raw[2:]:
-        test = Course([normalize(regex.match(str(y)).group(1)) for y in x.find_all('td')])
-        print(test.score)
-        break
+    c = Crawler()
+    c.do()
 
 
 if __name__ == "__main__":
