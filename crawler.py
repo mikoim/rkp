@@ -1,10 +1,8 @@
 import re
 import unicodedata
-
 import urllib.parse
 
 import math
-from collections import OrderedDict
 
 import mysql.connector
 from bs4 import BeautifulSoup
@@ -27,11 +25,11 @@ class Course:
 
         # 開講期間
         if list_data[3] == '春':
-            self.season = 1
+            self.season_id = 1
         elif list_data[3] == '秋':
-            self.season = 2
+            self.season_id = 2
         elif list_data[3] == '春秋':
-            self.season = 3
+            self.season_id = 3
         else:
             raise Exception('unknown season: {:s}'.format(list_data[3]))
 
@@ -53,9 +51,9 @@ class Course:
 
         # 登録者数
         if list_data[7]:
-            self.students = int(list_data[7])
+            self.student = int(list_data[7])
         else:
-            self.students = None
+            self.student = None
 
         # 成績評価, 評点平均値
         if None in list_data[7:14]:
@@ -67,9 +65,9 @@ class Course:
         self.dummy = list_data[15]
 
     def dump(self):
-        print(self.year, self.code, self.season, self.name, self.class_no)
+        print(self.year, self.code, self.season_id, self.name, self.class_no)
         print(self.professors)
-        print(self.students, self.score)
+        print(self.student, self.score)
         print(self.syllabus)
         print('----------')
 
@@ -79,6 +77,10 @@ class Crawler:
         self.regex = re.compile('<td.+?>(.+?)</td>', flags=re.DOTALL)
         self.cnx = mysql.connector.connect(database='rkp', user='rkp', password='UBFVVPNAGQKqAfNr')
         self.http = httplib2.Http(cache='.cache')
+
+        self.cursor = self.cnx.cursor()
+        self.cursor.execute('SELECT * FROM faculty;')
+        self.faculty = list(self.cursor)
 
     def __fetch(self, faculty, year, page):
         if faculty == '060':
@@ -113,7 +115,6 @@ class Crawler:
         )
 
         html = content.decode('Shift_JIS')
-
         soup = BeautifulSoup(html, "html5lib")
 
         if '入力された検索条件に該当する情報はありません。' in html:
@@ -154,12 +155,48 @@ class Crawler:
             page += 1
 
     def __insert(self, course, faculty):
-        sql_insert_course = 'INSERT INTO course VALUES (NULL, %d, %s, %d, %s, %s, %d);'
-        sql_insert_score = 'INSERT INTO score VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);'
-        sql_insert_professor = 'INSERT INTO professor VALUES (?, ?);'
-        sql_insert_professor_relationship = 'INSERT INTO professor_relationship VALUES (?, ?);'
+        sql_insert_course = 'INSERT INTO course VALUES (NULL, %s, %s, %s, %s, %s, %s);'
+        sql_insert_score = 'INSERT INTO score VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s);'
+        sql_insert_professor = 'INSERT INTO professor VALUES (NULL, %s);'
+        sql_insert_professor_relationship = 'INSERT INTO professor_relationship VALUES (%s, %s);'
+        sql_select_professor = 'SELECT * FROM professor WHERE name = %s;'
 
-        sql_select_professor = 'SELECT * FROM professor WHERE name = ?;'
+        faculty_id = [y for y in self.faculty if faculty == y[1]][0][0]
+
+        self.cursor.execute(sql_insert_course, (
+            faculty_id, course.code, course.season_id, course.name, course.class_no, course.student
+        ))
+
+        course_id = self.cursor.lastrowid
+
+        self.cursor.execute(sql_insert_score, (
+            course_id, course.score[0], course.score[1], course.score[2], course.score[3], course.score[4],
+            course.score[5], course.score[6], 0
+        ))
+
+        professors_id = []
+
+        for professor in course.professors:
+            self.cursor.execute(sql_select_professor, (professor,))
+            result = list(self.cursor)
+
+            if len(result) == 0:
+                self.cursor.execute(sql_insert_professor, (professor,))
+                professors_id.append(self.cursor.lastrowid)
+            else:
+                professors_id.append(result[0][0])
+
+        for professor_id in professors_id:
+            self.cursor.execute(sql_insert_professor_relationship, (course_id, professor_id))
+
+        self.cnx.commit()
+
+    def start(self):
+        for faculty_id, code, name in self.faculty:
+            print(faculty_id, code, name)
+
+            for year in range(2004, 2015):
+                self.fetch(code, year)
 
     @staticmethod
     def normalize(t):
@@ -178,20 +215,7 @@ class Crawler:
 
 def main():
     c = Crawler()
-
-    faculty = OrderedDict([
-        ("010", "神学部"), ("020", "文学部"), ("030", "法学部"), ("040", "経済学部"), ("050", "商学部"), ("070", "政策学部"),
-        ("080", "文化情報学部"), ("090", "社会学部"), ("0E0", "生命医科学部"), ("0F0", "スポーツ健康科学部"),
-        ("060", "理工学部"), ("0H0", "心理学部"), ("0J0", "グローバル・コミュニケーション学部"),
-        ("0K0", "国際教育インスティテュート"), ("0M0", "グローバル地域文化学部"), ("200", "語学科目"), ("300", "保健体育科目"),
-        ("400", "留学生科目"), ("100", "全学共通教養教育科目")
-    ])
-
-    for key, value in faculty.items():
-        print('\t\t' + value)
-
-        for year in range(2004, 2015):
-            c.fetch(key, year)
+    c.start()
 
 
 if __name__ == "__main__":
