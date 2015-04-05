@@ -1,6 +1,5 @@
 import re
 import unicodedata
-
 import urllib.parse
 
 import math
@@ -76,7 +75,7 @@ class Crawler:
         self.cnx = mysql.connector.connect(database='rkp', user='rkp', password='UBFVVPNAGQKqAfNr')
         self.http = httplib2.Http(cache='.cache')
 
-        self.cursor = self.cnx.cursor()
+        self.cursor = self.cnx.cursor(buffered=True)
         self.cursor.execute('SELECT * FROM faculty;')
         self.faculty = list(self.cursor)
 
@@ -134,6 +133,8 @@ class Crawler:
                 with open('debug.html', mode='w+', encoding='Shift_JIS') as tmp:
                     tmp.write(html)
 
+        self.cnx.commit()
+
         return max_page
 
     def fetch(self, faculty, year):
@@ -186,8 +187,6 @@ class Crawler:
 
         for professor_id in professors_id:
             self.cursor.execute(sql_insert_professor_relationship, (course_id, professor_id))
-
-        self.cnx.commit()
 
     def start(self):
         for faculty_id, code, name in self.faculty:
