@@ -1,8 +1,11 @@
 import re
 import unicodedata
+
 import urllib.parse
 
 import math
+
+import os.path
 
 import mysql.connector
 from bs4 import BeautifulSoup
@@ -79,11 +82,12 @@ class Crawler:
         self.cursor.execute('SELECT * FROM faculty;')
         self.faculty = list(self.cursor)
 
-    def __fetch(self, faculty, year, page):
-        if faculty == '060':
-            parm1 = '0G0'
-        else:
-            parm1 = 'ZZZ'
+    def __http(self, body) -> str:
+        cache_path = '.cache/{:d}-{:s}-{:d}.html'.format(body['search_term2'], body['search_term4'], body['pageNo'])
+
+        if os.path.isfile(cache_path):
+            with open(cache_path, mode='r', encoding='Shift_JIS') as file:
+                return file.read()
 
         response, content = self.http.request(
             'http://duet.doshisha.ac.jp/info/GPA', method='POST',
@@ -92,26 +96,41 @@ class Crawler:
                 'Referer': 'http://duet.doshisha.ac.jp/info/GPA',
                 'Content-type': 'application/x-www-form-urlencoded'
             },
-            body=urllib.parse.urlencode({
-                'furiwakeid': 'GP1001',  # Fix 未使用
-                'gakubuKenkyuka1': faculty,  # Var 学部: 010, 020, ...
-                'hOffSet': (page - 1) * 50,  # Var オフセット: 0, 50, 100, ...
-                'hQueryNo': '1',  # Fix 未使用
-                'languageCode': 'ja',  # Fix 言語
-                'pageNo': page,  # Var ページ番号: 1, 2, 3, ...
-                'rowCount': '50',  # Fix 項目数
-                'search_term0': '',  # Fix 検索ワード
-                'search_term2': year,  # Var 開講年度: 2004, 2005, ..., 2014
-                'search_term4': faculty,  # Var 学部: 010, 020, ...
-                'search_term4_2': parm1,  # Var 理工学部 0G0, 他 ZZZ
-                'search_term6': '12',  # Fix 課程
-                'search_term8': '',  # Fix 未使用
-                'toEmpty0': '1',  # Fix 検索ワードが空白の場合は1
-                'toEmpty4': '0'  # Fix 学部が選択されている場合は0
-            })
+            body=urllib.parse.urlencode(body)
         )
 
         html = content.decode('Shift_JIS')
+
+        with open(cache_path, mode='w', encoding='Shift_JIS') as file:
+            file.write(html)
+
+        return html
+
+    def __fetch(self, faculty, year, page):
+        if faculty == '060':
+            parm1 = '0G0'
+        else:
+            parm1 = 'ZZZ'
+
+        body = {
+            'furiwakeid': 'GP1001',  # Fix 未使用
+            'gakubuKenkyuka1': faculty,  # Var 学部: 010, 020, ...
+            'hOffSet': (page - 1) * 50,  # Var オフセット: 0, 50, 100, ...
+            'hQueryNo': '1',  # Fix 未使用
+            'languageCode': 'ja',  # Fix 言語
+            'pageNo': page,  # Var ページ番号: 1, 2, 3, ...
+            'rowCount': '50',  # Fix 項目数
+            'search_term0': '',  # Fix 検索ワード
+            'search_term2': year,  # Var 開講年度: 2004, 2005, ..., 2014
+            'search_term4': faculty,  # Var 学部: 010, 020, ...
+            'search_term4_2': parm1,  # Var 理工学部 0G0, 他 ZZZ
+            'search_term6': '12',  # Fix 課程
+            'search_term8': '',  # Fix 未使用
+            'toEmpty0': '1',  # Fix 検索ワードが空白の場合は1
+            'toEmpty4': '0'  # Fix 学部が選択されている場合は0
+        }
+
+        html = self.__http(body)
         soup = BeautifulSoup(html, "html5lib")
 
         if '入力された検索条件に該当する情報はありません。' in html:
