@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="同志社大学の楽勝科目を検索することが出来るサービス">
+    <meta name="keywords" content="同志社大学,講義,評価,楽勝科目,楽勝般教,弁当,コスパランキング,本家かまどや,ほっともっと">
+    <title>RKP</title>
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+    <link href="css/a.css" rel="stylesheet">
+    <link rel="shortcut icon" href="img/favicon.png">
+</head>
+<body>
+<nav class="navbar navbar-default navbar-static-top" role="navigation">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">RKP r2</a>
+        </div>
+        <div class="navbar-collapse collapse">
+            <ul class="nav navbar-nav">
+                <li><a href="kmdy.php">本家かまどや</a></li>
+                <li><a href="homo.php">ほっともっと</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+<div class="container-fluid">
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h3 class="panel-title">What is RKP?</h3>
+        </div>
+        <div class="panel-body">
+            RKPは同志社大学に入学した1回生が履修登録を円滑に進めることが出来るようにとの思いから作成されました.<br>
+            <b>楽勝科目を検索するサービス</b>としては提供して<b>おりません</b>のであらかじめご了承ください.
+        </div>
+    </div>
+    <div class="panel panel-default">
+        <div class="panel-heading">講義検索</div>
+        <div class="panel-body">
+            <div class="row">
+                <div class="col-lg-4 col-md-6 col-sm-7">
+                    <form id="options">
+                        <div class="form-group">
+                            <label>年度</label>
+                            <select class="form-control" name="year">
+                                <option value="ALL">未選択</option>
+                                <option value="2004">2004</option>
+                                <option value="2005">2005</option>
+                                <option value="2006">2006</option>
+                                <option value="2007">2007</option>
+                                <option value="2008">2008</option>
+                                <option value="2009">2009</option>
+                                <option value="2010">2010</option>
+                                <option value="2011">2011</option>
+                                <option value="2012">2012</option>
+                                <option value="2013" selected>2013</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>開講期間</label>
+                            <select class="form-control" name="season">
+                                <option value="ALL" selected>未選択</option>
+                                <option value="spring">春</option>
+                                <option value="autumn">秋</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>学部</label>
+                            <select class="form-control" name="department">
+                                <option value="ALL">未選択</option>
+                                <option value="010">神学部</option>
+                                <option value="020">文学部</option>
+                                <option value="030">法学部</option>
+                                <option value="040">経済学部</option>
+                                <option value="050">商学部</option>
+                                <option value="070">政策学部</option>
+                                <option value="080">文化情報学部</option>
+                                <option value="090">社会学部</option>
+                                <option value="0E0">生命医科学部</option>
+                                <option value="0F0">スポーツ健康科学部</option>
+                                <option value="060">理工学部</option>
+                                <option value="0H0">心理学部</option>
+                                <option value="0J0">グローバル・コミュニケーション学部</option>
+                                <option value="0M0">グローバル地域文化学部</option>
+                                <option value="200">語学科目</option>
+                                <option value="300">保健体育科目</option>
+                                <option value="400">留学生科目</option>
+                                <option value="100">全学共通教養教育科目</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>キーワード</label>
+                            <input type="text" name="keyword" class="form-control" placeholder="科目コード 科目名 担当者">
+                        </div>
+                        <div class="checkbox">
+                            <label>
+                                <input type="checkbox" name="SortRKP" value="true" checked> 登録者数を考慮に入れる
+                            </label>
+                        </div>
+                        <div class="checkbox">
+                            <label>
+                                <input type="checkbox" name="SortReverse" value="true"> 五カ年計画 (評価が低い順)
+                            </label>
+                        </div>
+                        <button type="reset" class="btn btn-danger">リセット</button>
+                        <button type="submit" id="sbutton" class="btn btn-primary">検索</button>
+                        <p class="help-block">情報の利用は自己責任であり、運営者は何らの責任も負担しません.</p>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-condensed table-hover table-striped">
+                <thead>
+                <tr>
+                    <th>#</th>
+                    <th>年度</th>
+                    <th>学部</th>
+                    <th>科目コード</th>
+                    <th>開講期間</th>
+                    <th>開講科目名</th>
+                    <th>クラス</th>
+                    <th class="professors">担当者</th>
+                    <th>登録者数</th>
+                    <th class="grade">成績評価</th>
+                    <th>評点平均値</th>
+                </tr>
+                </thead>
+                <tbody id="lecture">
+                <tr>
+                    <td>%a%</td>
+                    <td>%b%</td>
+                    <td>%z%</td>
+                    <td>%c%</td>
+                    <td>%d%</td>
+                    <td>%e%</td>
+                    <td>%f%</td>
+                    <td class="name">%g%</td>
+                    <td>%h%</td>
+                    <td>
+                        <div class="progress">
+                            <div class="progress-bar grade-a" style="width: %i0%%;">
+                                %i0%%
+                            </div>
+                            <div class="progress-bar grade-b" style="width: %i1%%;">
+                                %i1%%
+                            </div>
+                            <div class="progress-bar grade-c" style="width: %i2%%;">
+                                %i2%%
+                            </div>
+                            <div class="progress-bar grade-d" style="width: %i3%%;">
+                                %i3%%
+                            </div>
+                            <div class="progress-bar grade-f" style="width: %i4%%;">
+                                %i4%%
+                            </div>
+                            <div class="progress-bar grade-other" style="width: %i5%%;">
+                                %i5%%
+                            </div>
+                        </div>
+                    </td>
+                    <td>%j%</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="text-center">
+        <ul class="pagination">
+        </ul>
+    </div>
+    <div class="text-muted text-center">
+        <p>Any questions? Please contact <a href="http://www.google.com/recaptcha/mailhide/d?k=01z9IDcoOstsPH4m__Mg2FVw==&amp;c=rWHp61aBaWsV7suWtN4edGefMaDcGQL5pTpTxcXl1jU=" onclick="window.open('http://www.google.com/recaptcha/mailhide/d?k\07501z9IDcoOstsPH4m__Mg2FVw\75\75\46c\75rWHp61aBaWsV7suWtN4edGefMaDcGQL5pTpTxcXl1jU\075', '', 'toolbar=0,scrollbars=0,location=0,statusbar=0,menubar=0,resizable=0,width=500,height=300'); return false;" title="Reveal this e-mail address">me</a>.</p>
+    </div>
+</div>
+
+<div class="modal fade" id="ieWarning" tabindex="-1" data-backdrop="static">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">互換性の問題</h4>
+            </div>
+            <div class="modal-body">
+                <p>このサイトはInternet Explorerに対応しておりません.</p>
+                <p><a href="http://www.google.co.jp/intl/ja/chrome/browser/">Chrome</a>, <a href="http://www.mozilla.jp/firefox/">Firefox</a>, <a href="http://www.opera.com/ja">Opera</a> 等のブラウザをご利用いただくことをおすすめします.</p>
+                <p>Tips : 大学構内のコンピュータにはFirefoxがインストールされています.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+<script src="js/a.js"></script>
+<script>
+    (function (i, s, o, g, r, a, m) {
+        i['GoogleAnalyticsObject'] = r;
+        i[r] = i[r] || function () {
+            (i[r].q = i[r].q || []).push(arguments)
+        }, i[r].l = 1 * new Date();
+        a = s.createElement(o),
+                m = s.getElementsByTagName(o)[0];
+        a.async = 1;
+        a.src = g;
+        m.parentNode.insertBefore(a, m)
+    })(window, document, 'script', '//www.google-analytics.com/analytics.js', 'ga');
+    ga('create', 'UA-44033957-7', 'ddo.jp');
+    ga('require', 'displayfeatures');
+    ga('require', 'linkid', 'linkid.js');
+    ga('send', 'pageview');
+</script>
+</body>
+</html>
