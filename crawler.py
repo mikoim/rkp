@@ -17,6 +17,9 @@ class Crawler:
         self.db = DB()
         self.session = self.db.session()
 
+        self.lecturers_cache = {}
+        self.seasons_cache = {}
+
     def __http(self, body) -> str:
         cache_path = '.cache/{:d}-{:s}-{:d}.html'.format(body['search_term2'], body['search_term4'], body['pageNo'])
 
@@ -159,6 +162,9 @@ class Crawler:
         :return: Season object
         """
 
+        if name in self.seasons_cache:
+            return self.seasons_cache[name]
+
         query = self.session.query(Season).filter_by(name=name)
         count = query.count()
 
@@ -167,6 +173,7 @@ class Crawler:
 
         elif count == 1:
             season = query.one()
+            self.seasons_cache[name] = season
             return season
 
         else:
@@ -183,6 +190,9 @@ class Crawler:
         :return: Lecturer object
         """
 
+        if fullname in self.lecturers_cache:
+            return self.lecturers_cache[fullname]
+
         query = self.session.query(Lecturer).filter_by(fullname=fullname)
         count = query.count()
 
@@ -191,6 +201,7 @@ class Crawler:
 
         elif count == 1:
             lecturer = query.one()
+            self.lecturers_cache[fullname] = lecturer
             return lecturer
 
         else:
