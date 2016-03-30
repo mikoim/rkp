@@ -1,86 +1,21 @@
+import math
+import os.path
 import re
 import unicodedata
-
 import urllib.parse
 
-import math
-
-import os.path
-
-import mysql.connector
-from bs4 import BeautifulSoup
 import httplib2
+from bs4 import BeautifulSoup
 
-
-class Course:
-    @staticmethod
-    def __safe_float(data):
-        if data:
-            return float(data)
-        return data
-
-    def __init__(self, list_data):
-        if len(list_data) != 16:
-            raise SyntaxError('column number is not 16')
-
-        # 年度
-        self.year = int(list_data[0])
-
-        # 課程
-        self.dummy = list_data[1]
-
-        # 科目コード
-        self.code = list_data[2]
-
-        # 開講期間
-        if list_data[3] == '春':
-            self.season_id = 1
-        elif list_data[3] == '秋':
-            self.season_id = 2
-        elif list_data[3] == '春秋':
-            self.season_id = 3
-        else:
-            raise Exception('unknown season: {:s}'.format(list_data[3]))
-
-        # 開講科目名
-        soup = BeautifulSoup(list_data[4], "html5lib")
-        link = soup.find('a')
-        if link:
-            self.syllabus = link['href']
-            self.name = str(link.string)
-        else:
-            self.syllabus = None
-            self.name = list_data[4]
-
-        # クラス
-        self.class_no = list_data[5]
-
-        # 担当者
-        self.professors = set(re.split('<br>|<br/>', list_data[6]))
-
-        # 登録者数, 成績評価, 評点平均値
-        self.score = list(map(self.__safe_float, list_data[7:15]))
-
-        # 備考
-        self.dummy = list_data[15]
-
-    def dump(self):
-        print(self.year, self.code, self.season_id, self.name, self.class_no)
-        print(self.professors)
-        print(self.score)
-        print(self.syllabus)
-        print('----------')
+from db import *
 
 
 class Crawler:
     def __init__(self):
         self.regex = re.compile('<td.+?>(.+?)</td>', flags=re.DOTALL)
-        self.cnx = mysql.connector.connect(database='rkp', user='rkp', password='UBFVVPNAGQKqAfNr')
-        self.http = httplib2.Http(cache='.cache')
-
-        self.cursor = self.cnx.cursor(buffered=True)
-        self.cursor.execute('SELECT * FROM faculty;')
-        self.faculty = list(self.cursor)
+        self.http = httplib2.Http()
+        self.db = DB()
+        self.session = self.db.session()
 
     def __http(self, body) -> str:
         cache_path = '.cache/{:d}-{:s}-{:d}.html'.format(body['search_term2'], body['search_term4'], body['pageNo'])
@@ -107,23 +42,24 @@ class Crawler:
         return html
 
     def __fetch(self, faculty, year, page):
-        if faculty == '060':
-            parm1 = '0G0'
+        term4 = faculty.search_term4
+        if term4 == '060':
+            term4_2 = '0G0'
         else:
-            parm1 = 'ZZZ'
+            term4_2 = 'ZZZ'
 
         body = {
             'furiwakeid': 'GP1001',  # Fix 未使用
-            'gakubuKenkyuka1': faculty,  # Var 学部: 010, 020, ...
+            'gakubuKenkyuka1': term4,  # Var 学部: 010, 020, ...
             'hOffSet': (page - 1) * 50,  # Var オフセット: 0, 50, 100, ...
             'hQueryNo': '1',  # Fix 未使用
             'languageCode': 'ja',  # Fix 言語
             'pageNo': page,  # Var ページ番号: 1, 2, 3, ...
             'rowCount': '50',  # Fix 項目数
             'search_term0': '',  # Fix 検索ワード
-            'search_term2': year,  # Var 開講年度: 2004, 2005, ..., 2014
-            'search_term4': faculty,  # Var 学部: 010, 020, ...
-            'search_term4_2': parm1,  # Var 理工学部 0G0, 他 ZZZ
+            'search_term2': year,  # Var 開講年度: 2004, 2005, ..., 2015
+            'search_term4': term4,  # Var 学部: 010, 020, ...
+            'search_term4_2': term4_2,  # Var 理工学部 0G0, 他 ZZZ
             'search_term6': '12',  # Fix 課程
             'search_term8': '',  # Fix 未使用
             'toEmpty0': '1',  # Fix 検索ワードが空白の場合は1
@@ -144,17 +80,14 @@ class Crawler:
         else:
             max_page = None
 
-        for x in raw[2:]:
-            try:
-                course = Course([self.normalize(self.regex.match(str(y)).group(1)) for y in x.find_all('td')])
-                self.__insert(course, faculty)
-            except SyntaxError:
-                with open('debug.html', mode='w+', encoding='Shift_JIS') as tmp:
-                    tmp.write(html)
-
-        self.cnx.commit()
-
-        return max_page
+        try:
+            subjects = list(map(lambda x: self.__raw_to_subject(faculty, [self.__normalize(self.regex.match(str(y)).group(1)) for y in x.find_all('td')]), raw[2:]))
+            return max_page, subjects
+        except Exception as e:
+            with open('debug.html', mode='w+', encoding='Shift_JIS') as tmp:
+                tmp.write(html)
+            print(e)
+            exit(1)
 
     def fetch(self, faculty, year):
         page = 1
@@ -164,58 +97,124 @@ class Crawler:
             if max_page < page:
                 break
 
-            print('\t' + ','.join([faculty, str(year), str(page)]))
+            print('\t' + ','.join([faculty.name, str(year), str(page)]))
 
-            ret = self.__fetch(faculty, year, page)
+            ret, subjects = self.__fetch(faculty, year, page)
             if ret:
                 max_page = ret
+
+            self.session.add_all(subjects)
+            self.session.commit()
 
             page += 1
 
     def __insert(self, course, faculty):
-        sql_insert_course = 'INSERT INTO course VALUES (NULL, %s, %s, %s, %s, %s, %s, %s);'
-        sql_insert_score = 'INSERT INTO score VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s);'
-        sql_insert_professor = 'INSERT INTO professor VALUES (NULL, %s);'
-        sql_insert_professor_relationship = 'INSERT INTO professor_relationship VALUES (%s, %s);'
-        sql_select_professor = 'SELECT * FROM professor WHERE name = %s;'
+        pass
 
-        faculty_id = [y for y in self.faculty if faculty == y[1]][0][0]
+    def __raw_to_subject(self, faculty, raw):
+        if len(raw) != 16:
+            raise AssertionError('raw length is must be 16! {:d} != 16'.format(len(raw)))
 
-        self.cursor.execute(sql_insert_course, (
-            faculty_id, course.year, course.code, course.season_id, course.name, course.class_no, course.syllabus
-        ))
+        # 年度
+        year = int(raw[0])
 
-        course_id = self.cursor.lastrowid
+        # 科目コード
+        code = raw[2]
 
-        self.cursor.execute(sql_insert_score, (
-            course_id, course.score[0], course.score[1], course.score[2], course.score[3], course.score[4],
-            course.score[5], course.score[6], course.score[7], 0
-        ))
+        # 開講期間
+        season = raw[3]
 
-        professors_id = []
+        # 開講科目名
+        soup = BeautifulSoup(raw[4], "html5lib")
+        link = soup.find('a')
+        if link:
+            syllabus = link['href']
+            name = str(link.string)
+        else:
+            syllabus = None
+            name = raw[4]
 
-        for professor in course.professors:
-            self.cursor.execute(sql_select_professor, (professor,))
-            result = list(self.cursor)
+        # クラス
+        class_no = raw[5]
 
-            if len(result) == 0:
-                self.cursor.execute(sql_insert_professor, (professor,))
-                professors_id.append(self.cursor.lastrowid)
-            else:
-                professors_id.append(result[0][0])
+        # 担当者
+        lecturers = list(map(self.__raw_to_lecturer, set(re.split('<br>|<br/>', raw[6]))))
 
-        for professor_id in professors_id:
-            self.cursor.execute(sql_insert_professor_relationship, (course_id, professor_id))
+        # 登録者数, 成績評価, 評点平均値
+        data = list(map(self.__safe_float, raw[7:15]))
+
+        return Subject(
+            school_year=year, faculty=faculty, code=code, season=self.__raw_to_season(season), name=name, syllabus_link=syllabus, class_no=class_no, lecturers=lecturers,
+            number_participants=data[0], grade_a=data[1], grade_b=data[2], grade_c=data[3], grade_d=data[4], grade_f=data[5], grade_other=data[6], average_grade=data[7],
+            rkp_index=0
+        )
+
+    def __raw_to_season(self, name):
+        """
+        Ret Season object based on name.
+
+        :type name: str
+        :param name: season name
+        :rtype: Season
+        :return: Season object
+        """
+
+        query = self.session.query(Season).filter_by(name=name)
+        count = query.count()
+
+        if count > 1:
+            raise LookupError('matched multiple rows! count:{:d} name:{:s}'.format(count, name))
+
+        elif count == 1:
+            season = query.one()
+            return season
+
+        else:
+            self.session.add(Season(name=name))
+            return self.__raw_to_season(name)
+
+    def __raw_to_lecturer(self, fullname):
+        """
+        Ret Lecturer object based on normalized fullname.
+
+        :type fullname: str
+        :param fullname: lecturer's name
+        :rtype: Lecturer
+        :return: Lecturer object
+        """
+
+        query = self.session.query(Lecturer).filter_by(fullname=fullname)
+        count = query.count()
+
+        if count > 1:
+            raise LookupError('matched multiple rows! count:{:d} fullname:{:s}'.format(count, fullname))
+
+        elif count == 1:
+            lecturer = query.one()
+            return lecturer
+
+        else:
+            self.session.add(Lecturer(fullname=fullname))
+            return self.__raw_to_lecturer(fullname)
 
     def start(self):
-        for faculty_id, code, name in self.faculty:
-            print(faculty_id, code, name)
+        faculties = self.session.query(Faculty).all()
 
-            for year in range(2004, 2015):
-                self.fetch(code, year)
+        for f in faculties:
+            print(f.name, f.search_term4)
+
+            for year in range(2004, 2016):
+                self.fetch(f, year)
 
     @staticmethod
-    def normalize(t):
+    def __safe_float(s):
+        if s:
+            return float(s)
+
+        return s
+
+    @staticmethod
+    def __normalize(t):
         t = t.replace('\n', '')
 
         while "  " in t:
