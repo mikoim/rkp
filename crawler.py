@@ -140,7 +140,7 @@ class Crawler:
         class_no = raw[5]
 
         # 担当者
-        lecturers = list(map(self.__raw_to_lecturer, set(re.split('<br>|<br/>', raw[6]))))
+        lecturers = list(map(self.__raw_to_lecturer, [x for x in set(re.split('<br>|<br/>', raw[6])) if x not in ['**', '不定']]))
 
         # 登録者数, 成績評価, 評点平均値
         data = list(map(self.__safe_float, raw[7:15]))
