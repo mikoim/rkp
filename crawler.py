@@ -89,8 +89,7 @@ class Crawler:
         except Exception as e:
             with open('debug.html', mode='w+', encoding='Shift_JIS') as tmp:
                 tmp.write(html)
-            print(e)
-            exit(1)
+            raise e
 
     def fetch(self, faculty, year):
         page = 1
