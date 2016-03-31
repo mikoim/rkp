@@ -73,7 +73,7 @@ class Crawler:
         soup = BeautifulSoup(html, "html5lib")
 
         if '入力された検索条件に該当する情報はありません。' in html:
-            return -1
+            return -1, []
 
         raw = soup.find('table', width="95%").find('tbody').find_all('tr')
         raw_max_page = soup.find(attrs={"name": "KekkaMax"}).get('value')
