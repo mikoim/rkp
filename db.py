@@ -4,7 +4,16 @@ from sqlalchemy import create_engine, Column, Integer, Float, String, Table, For
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, sessionmaker
 
-Base = declarative_base()
+
+class ReprBase:
+    def __repr__(self):
+        return '{}({})'.format(
+            self.__class__.__name__,
+            ', '.join(['{:s}={!r}'.format(x, y) for x, y in self.__dict__.items() if x[0] != '_'])
+        )
+
+
+Base = declarative_base(cls=ReprBase)
 
 lecture_relationship = Table(
     'lecturer_relationship', Base.metadata,
@@ -21,9 +30,6 @@ class Faculty(Base):
     name = Column(String(250), unique=True, nullable=False)
     search_term4 = Column(String(3), unique=True, nullable=False)
 
-    def __repr__(self):
-        return "Faculty(id={!r}, name={!r}, search_term4={!r})".format(self.id, self.name, self.search_term4)
-
     def __str__(self):
         return self.name
 
@@ -34,9 +40,6 @@ class Season(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String(250), unique=True, nullable=False)
 
-    def __repr__(self):
-        return 'Season(id={!r}, name={!r})'.format(self.id, self.name)
-
     def __str__(self):
         return self.name
 
@@ -46,9 +49,6 @@ class Lecturer(Base):
 
     id = Column(Integer, primary_key=True)
     fullname = Column(String(250), unique=True, nullable=False)
-
-    def __repr__(self):
-        return 'Lecturer(id={!r}, fullname={!r})'.format(self.id, self.fullname)
 
     def __str__(self):
         return self.fullname
@@ -89,9 +89,6 @@ class Subject(Base):
     average_grade = Column(Float)
     # RKP Index
     rkp_index = Column(Float, index=True)
-
-    def __repr__(self):
-        return 'Subject(id={!r}, school_year={!r}, faculty_id={!r}, faculty={!r}, code={!r}, season_id={!r}, season={!r}, name={!r}, syllabus_link={!r}, class_no={!r}, lecturers={!r}, number_participants={!r}, grade_a={!r}, grade_b={!r}, grade_c={!r}, grade_d={!r}, grade_f={!r}, grade_other={!r}, average_grade={!r}, rkp_index={!r})'.format(self.id, self.school_year, self.faculty_id, self.faculty, self.code, self.season_id, self.season, self.name, self.syllabus_link, self.class_no, self.lecturers, self.number_participants, self.grade_a, self.grade_b, self.grade_c, self.grade_d, self.grade_f, self.grade_other, self.average_grade, self.rkp_index)
 
     def __str__(self):
         return self.name
