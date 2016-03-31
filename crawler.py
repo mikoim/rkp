@@ -110,9 +110,6 @@ class Crawler:
 
             page += 1
 
-    def __insert(self, course, faculty):
-        pass
-
     def __raw_to_subject(self, faculty, raw):
         if len(raw) != 16:
             raise AssertionError('raw length is must be 16! {:d} != 16'.format(len(raw)))
