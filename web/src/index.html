@@ -79,7 +79,18 @@
 
     ga('create', 'UA-44033957-9', 'auto');
     ga('send', 'pageview');
+</script>
 
+<script>
+    !function (d, s, id) {
+        var js, fjs = d.getElementsByTagName(s)[0], p = /^http:/.test(d.location) ? 'http' : 'https';
+        if (!d.getElementById(id)) {
+            js = d.createElement(s);
+            js.id = id;
+            js.src = p + '://platform.twitter.com/widgets.js';
+            fjs.parentNode.insertBefore(js, fjs);
+        }
+    }(document, 'script', 'twitter-wjs');
 </script>
 
 <nav class="navbar">
@@ -91,6 +102,13 @@
 </nav>
 
 <div class="container-fluid" id="man">
+
+    <div class="row">
+        <div class="col-md-2 col-md-offset-9 text-right">
+            <a href="https://twitter.com/share" class="twitter-share-button" data-url="http://lolcat.miko.im/" data-text="RKPv3を使って同志社大学の良さげな科目を素早く検索しよう！" data-via="comfort_bread" data-size="large" data-hashtags="RKPv3">Tweet</a>
+        </div>
+    </div>
+
     <div class="row">
         <div class="col-md-10 col-md-offset-1">
             <div class="form-group has-feedback">
