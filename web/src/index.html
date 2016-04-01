@@ -192,7 +192,7 @@
                 if (location.hash == "") {
                     this.loadConf();
                 } else {
-                    this.$data.keyword = decodeURIComponent(location.hash.substr(1));
+                    this.$data.keyword = decodeURIComponent(location.hash.substr(1)).replace(/\?.*/g, '');
                 }
                 this.search();
             },
@@ -223,11 +223,13 @@
                         }
                     });
                 },
+
                 saveConf: function () {
                     if (window.localStorage) {
                         localStorage.setItem("keyword", this.$data.keyword);
                     }
                 },
+
                 loadConf: function () {
                     if (window.localStorage) {
                         var $keyword = localStorage.getItem("keyword");
