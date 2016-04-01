@@ -1,0 +1,13 @@
+{
+  "name": "web",
+  "version": "0.0.1",
+  "description": "",
+  "scripts": {
+    "build": "\"`npm bin`/html-minifier\" -c html-minifier.conf -o static/index.html src/index.html"
+  },
+  "author": "Eshin Kunishima <ek@esh.ink> (https://esh.ink/)",
+  "license": "MIT",
+  "devDependencies": {
+    "html-minifier": "^1.4.0"
+  }
+}

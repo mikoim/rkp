@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="同志社大学の良さげな科目を年度・学部・コード・期間・科目名・クラス・講師から素早く検索することが出来るサービス．">
+    <meta name="keywords" content="楽勝般教,一般教養科目,大学,履修,検索,年度,学部,コード,期間,科目名,クラス,講師,">
+    <meta name="author" content="（´・ω・） ｽ">
+    <title>RKPv3</title>
+    <meta property="og:image" content="http://lolcat.miko.im/ogp.png">
+    <meta property="og:description" content="同志社大学の良さげな科目を年度・学部・コード・期間・科目名・クラス・講師から素早く検索することが出来るサービス．">
+    <meta property="og:site_name" content="RKPv3">
+    <meta property="og:title" content="RKPv3">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="http://lolcat.miko.im/">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.6/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-material-design/0.5.9/css/bootstrap-material-design.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-material-design/0.5.9/css/ripples.min.css">
+    <style>
+        .progress {
+            margin-bottom: 0;
+            height: 20px;
+        }
+
+        .progress-bar {
+            color: #000;
+        }
+
+        .grade-a {
+            background-color: #9ff !important;
+        }
+
+        .grade-b {
+            background-color: #e3fec0 !important;
+        }
+
+        .grade-c {
+            background-color: #ffc !important;
+        }
+
+        .grade-d {
+            background-color: #e8f8ff !important;
+        }
+
+        .grade-f {
+            background-color: #ffe6e8 !important;
+        }
+
+        .grade-other {
+            background-color: #fcc !important;
+        }
+
+        .name {
+            text-overflow: ellipsis;
+            max-width: 200px;
+            white-space: nowrap;
+            overflow: hidden
+        }
+    </style>
+</head>
+
+<body>
+
+<script>
+    (function (i, s, o, g, r, a, m) {
+        i['GoogleAnalyticsObject'] = r;
+        i[r] = i[r] || function () {
+                    (i[r].q = i[r].q || []).push(arguments)
+                }, i[r].l = 1 * new Date();
+        a = s.createElement(o),
+                m = s.getElementsByTagName(o)[0];
+        a.async = 1;
+        a.src = g;
+        m.parentNode.insertBefore(a, m)
+    })(window, document, 'script', '//www.google-analytics.com/analytics.js', 'ga');
+
+    ga('create', 'UA-44033957-9', 'auto');
+    ga('send', 'pageview');
+
+</script>
+
+<nav class="navbar">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <a class="navbar-brand" href="/">RKPv3</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container-fluid" id="man">
+    <div class="row">
+        <div class="col-md-10 col-md-offset-1">
+            <div class="form-group has-feedback">
+                <input type="text" class="form-control input-lg" v-model="keyword" placeholder="年度 学部 科目コード 開講期間 開講科目名 クラス 担当者">
+                <span class="glyphicon glyphicon-search form-control-feedback"></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-10 col-md-offset-1">
+            <div class="table-responsive">
+                <table class="table table-condensed table-hover table-striped">
+                    <thead>
+                    <tr>
+                        <th>年度</th>
+                        <th>学部</th>
+                        <th>コード</th>
+                        <th>期間</th>
+                        <th>科目名</th>
+                        <th>クラス</th>
+                        <th>講師</th>
+                        <th>登録者数</th>
+                        <th>成績評価</th>
+                        <th>GPA</th>
+                    </tr>
+                    </thead>
+                    <tbody id="lecture">
+                    <tr v-for="s in subjects">
+                        <td v-text="s.school_year"></td>
+                        <td v-text="s.faculty"></td>
+                        <td v-text="s.code"></td>
+                        <td v-text="s.season"></td>
+                        <td><a v-bind:href="s.syllabus_link" v-text="s.name"></a></td>
+                        <td v-text="s.class_no"></td>
+                        <td class="name" v-text="s.lecturers"></td>
+                        <td v-text="s.number_participants"></td>
+                        <td>
+                            <div class="progress">
+                                <div class="progress-bar grade-a" v-bind:style="{width: s.grade.a + '%'}" v-text="s.grade.a | floor"></div>
+                                <div class="progress-bar grade-b" v-bind:style="{width: s.grade.b + '%'}" v-text="s.grade.b | floor"></div>
+                                <div class="progress-bar grade-c" v-bind:style="{width: s.grade.c + '%'}" v-text="s.grade.c | floor"></div>
+                                <div class="progress-bar grade-d" v-bind:style="{width: s.grade.d + '%'}" v-text="s.grade.d | floor"></div>
+                                <div class="progress-bar grade-f" v-bind:style="{width: s.grade.f + '%'}" v-text="s.grade.f | floor"></div>
+                                <div class="progress-bar grade-other" v-bind:style="{width: s.grade.other + '%'}" v-text="s.grade.other | floor"></div>
+                            </div>
+                        </td>
+                        <td v-text="s.average_grade | floor"></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.2/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vue/1.0.20/vue.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.6/js/bootstrap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-material-design/0.5.9/js/material.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-material-design/0.5.9/js/ripples.min.js"></script>
+<script>
+    $(function () {
+        $.material.init();
+
+        new Vue({
+            el: '#man',
+
+            data: {
+                keyword: '',
+                subjects: null
+            },
+
+            filters: {
+                floor: function (value) {
+                    return Math.floor(value * 100) / 100;
+                }
+            },
+
+            created: function () {
+                this.loadConf();
+                this.search();
+            },
+
+            watch: {
+                keyword: function () {
+                    this.saveConf();
+                    this.search();
+                }
+            },
+
+            methods: {
+                search: function () {
+                    var self = this;
+                    var $data = self.$data;
+                    var $keyword = self.keyword;
+                    if ($keyword == '' || $keyword == null) {
+                        $keyword = "2015";
+                    }
+
+                    $.ajax({
+                        type: "GET",
+                        url: "/search",
+                        data: {'keyword': $keyword},
+                        dataType: "json",
+                        success: function (list) {
+                            $data.subjects = list['subjects'];
+                        }
+                    });
+                },
+                saveConf: function () {
+                    if (window.localStorage) {
+                        localStorage.setItem("keyword", this.$data.keyword);
+                    }
+                },
+                loadConf: function () {
+                    if (window.localStorage) {
+                        var $keyword = localStorage.getItem("keyword");
+                        if ($keyword == null) {
+                            $keyword = "フランス法";
+                        }
+                        this.$data.keyword = $keyword;
+                    }
+                }
+            }
+        })
+    })
+</script>
+</body>
+</html>
