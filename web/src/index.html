@@ -171,7 +171,11 @@
             },
 
             created: function () {
-                this.loadConf();
+                if (location.hash == "") {
+                    this.loadConf;
+                } else {
+                    this.$data.keyword = decodeURIComponent(location.hash.substr(1));
+                }
                 this.search();
             },
 
@@ -184,9 +188,8 @@
 
             methods: {
                 search: function () {
-                    var self = this;
-                    var $data = self.$data;
-                    var $keyword = self.keyword;
+                    var $data = this.$data;
+                    var $keyword = this.keyword;
                     if ($keyword == '' || $keyword == null) {
                         $keyword = "2015";
                     }
@@ -198,6 +201,7 @@
                         dataType: "json",
                         success: function (list) {
                             $data.subjects = list['subjects'];
+                            location.hash = encodeURIComponent($keyword);
                         }
                     });
                 },
