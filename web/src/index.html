@@ -190,7 +190,7 @@
 
             created: function () {
                 if (location.hash == "") {
-                    this.loadConf;
+                    this.loadConf();
                 } else {
                     this.$data.keyword = decodeURIComponent(location.hash.substr(1));
                 }
