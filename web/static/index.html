@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="楽般サーチのWeb UIをつくろう！（仮）の実装例です．良さげなWeb UIを作りましょう．">
+    <meta name="author" content="（´・ω・） ｽ">
+    <title>楽般サーチのWeb UIをつくろう！（仮）の実装例</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.6/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-material-design/0.5.9/css/bootstrap-material-design.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-material-design/0.5.9/css/ripples.min.css">
+    <style>
+        .progress {
+            margin-bottom: 0;
+            height: 20px;
+        }
+
+        .progress-bar {
+            color: #000;
+        }
+
+        .grade-a {
+            background-color: #9ff !important;
+        }
+
+        .grade-b {
+            background-color: #e3fec0 !important;
+        }
+
+        .grade-c {
+            background-color: #ffc !important;
+        }
+
+        .grade-d {
+            background-color: #e8f8ff !important;
+        }
+
+        .grade-f {
+            background-color: #ffe6e8 !important;
+        }
+
+        .grade-other {
+            background-color: #fcc !important;
+        }
+
+        .name {
+            text-overflow: ellipsis;
+            max-width: 200px;
+            white-space: nowrap;
+            overflow: hidden
+        }
+    </style>
+</head>
+
+<body>
+
+<nav class="navbar">
+    <div class="container">
+        <div class="navbar-header">
+            <a class="navbar-brand" href="/">楽般サーチのWeb UIをつくろう！（仮）の実装例</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container" id="man">
+    <div class="row">
+        <div class="form-group has-feedback">
+            <input type="text" class="form-control input-lg" v-model="keyword" placeholder="年度 学部 科目コード 開講期間 開講科目名 クラス 担当者">
+            <span class="glyphicon glyphicon-search form-control-feedback"></span>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="table-responsive">
+            <table class="table table-condensed table-hover table-striped">
+                <thead>
+                <tr>
+                    <th>年度</th>
+                    <th>学部</th>
+                    <th>科目コード</th>
+                    <th>開講期間</th>
+                    <th>開講科目名</th>
+                    <th>クラス</th>
+                    <th>担当者</th>
+                    <th>登録者数</th>
+                    <th>成績評価</th>
+                    <th>評点平均値</th>
+                </tr>
+                </thead>
+                <tbody id="lecture">
+                <tr v-for="s in subjects">
+                    <td>{{s.school_year}}</td>
+                    <td>{{s.faculty}}</td>
+                    <td>{{s.code}}</td>
+                    <td>{{s.season}}</td>
+                    <td>{{s.name}}</td>
+                    <td>{{s.class_no}}</td>
+                    <td class="name">{{s.lecturers}}</td>
+                    <td>{{s.number_participants}}</td>
+                    <td>
+                        <div class="progress">
+                            <div class="progress-bar grade-a" v-bind:style="{width: s.grade.a + '%'}">
+                                {{s.grade.a}}
+                            </div>
+                            <div class="progress-bar grade-b" v-bind:style="{width: s.grade.b + '%'}">
+                                {{s.grade.b}}
+                            </div>
+                            <div class="progress-bar grade-c" v-bind:style="{width: s.grade.c + '%'}">
+                                {{s.grade.c}}
+                            </div>
+                            <div class="progress-bar grade-d" v-bind:style="{width: s.grade.d + '%'}">
+                                {{s.grade.d}}
+                            </div>
+                            <div class="progress-bar grade-f" v-bind:style="{width: s.grade.f + '%'}">
+                                {{s.grade.f}}
+                            </div>
+                            <div class="progress-bar grade-other" v-bind:style="{width: s.grade.other + '%'}">
+                                {{s.grade.other}}
+                            </div>
+                        </div>
+                    </td>
+                    <td>{{s.average_grade}}</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.2/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vue/1.0.20/vue.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.6/js/bootstrap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-material-design/0.5.9/js/material.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-material-design/0.5.9/js/ripples.min.js"></script>
+<script>
+    $(function () {
+        $.material.init();
+
+        new Vue({
+            el: '#man',
+
+            data: {
+                keyword: '',
+                subjects: null
+            },
+
+            created: function () {
+                this.loadConf();
+                this.search();
+            },
+
+            watch: {
+                keyword: function () {
+                    this.saveConf();
+                    this.search();
+                }
+            },
+
+            methods: {
+                search: function () {
+                    var self = this;
+                    var $data = self.$data;
+                    var $keyword = self.keyword;
+                    if ($keyword == '' || $keyword == null) {
+                        $keyword = "2015";
+                    }
+
+                    $.ajax({
+                        type: "GET",
+                        url: "/search",
+                        data: {'keyword': $keyword},
+                        dataType: "json",
+                        success: function (list) {
+                            $data.subjects = list['subjects'];
+                        }
+                    });
+                },
+                saveConf: function () {
+                    if (window.localStorage) {
+                        localStorage.setItem("keyword", this.$data.keyword);
+                    }
+                },
+                loadConf: function () {
+                    if (window.localStorage) {
+                        var $keyword = localStorage.getItem("keyword");
+                        if ($keyword == null) {
+                            $keyword = "フランス法";
+                        }
+                        this.$data.keyword = $keyword;
+                    }
+                }
+            }
+        })
+    })
+</script>
+</body>
+</html>

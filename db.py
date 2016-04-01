@@ -93,6 +93,28 @@ class Subject(Base):
     def __str__(self):
         return self.name
 
+    def dict(self):
+        return {
+            'school_year': self.school_year,
+            'faculty': str(self.faculty),
+            'code': self.code,
+            'season': str(self.season),
+            'name': self.name,
+            'syllabus_link': self.syllabus_link,
+            'class_no': self.class_no,
+            'lecturers': list(map(str, self.lecturers)),
+            'number_participants': self.number_participants,
+            'grade': {
+                'a': self.grade_a,
+                'b': self.grade_b,
+                'c': self.grade_c,
+                'd': self.grade_d,
+                'f': self.grade_f,
+                'other': self.grade_other
+            },
+            'average_grade': self.average_grade
+        }
+
 
 class DB:
     def __init__(self, url=None):
@@ -122,4 +144,9 @@ class DB:
 
 
 if __name__ == '__main__':
-    pass
+    a = DB()
+    s = a.session()
+
+    t = s.query(Faculty).filter_by(name='理工学部').one()
+
+    print(s.query(Subject).filter_by(faculty=t, school_year=2014, class_no=1).first())

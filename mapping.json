@@ -1,0 +1,67 @@
+{
+  "mappings": {
+    "subject": {
+      "properties": {
+        "average_grade": {
+          "type": "double"
+        },
+        "class_no": {
+          "type": "string",
+          "index": "not_analyzed"
+        },
+        "code": {
+          "type": "string",
+          "index": "not_analyzed"
+        },
+        "faculty": {
+          "type": "string",
+          "index": "not_analyzed"
+        },
+        "grade": {
+          "properties": {
+            "a": {
+              "type": "double"
+            },
+            "b": {
+              "type": "double"
+            },
+            "c": {
+              "type": "double"
+            },
+            "d": {
+              "type": "double"
+            },
+            "f": {
+              "type": "double"
+            },
+            "other": {
+              "type": "double"
+            }
+          }
+        },
+        "lecturers": {
+          "type": "string",
+          "index": "not_analyzed"
+        },
+        "name": {
+          "type": "string",
+          "index": "not_analyzed"
+        },
+        "number_participants": {
+          "type": "long"
+        },
+        "school_year": {
+          "type": "long"
+        },
+        "season": {
+          "type": "string",
+          "index": "not_analyzed"
+        },
+        "syllabus_link": {
+          "type": "string",
+          "index": "not_analyzed"
+        }
+      }
+    }
+  }
+}
