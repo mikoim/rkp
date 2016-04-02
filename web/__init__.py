@@ -31,11 +31,11 @@ def search():
                                 "lang": "groovy",
                                 "file": "rkp-index",
                                 "params": {
-                                    "weight_a": 2,
-                                    "weight_b": 1,
-                                    "weight_c": 0,
+                                    "weight_a": 3,
+                                    "weight_b": 2,
+                                    "weight_c": 1,
                                     "weight_d": -4,
-                                    "weight_f": -3
+                                    "weight_f": -2
                                 }
                             }
                         }
