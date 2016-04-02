@@ -47,7 +47,7 @@ def search():
     result = es.search(index='rkp', body=query, filter_path='hits.hits._source')
 
     if 'hits' not in result:
-        return jsonify(subjects=[])
+        return jsonify(subjects=[]), 404
 
     subjects = [s['_source'] for s in result['hits']['hits']]
 

@@ -112,8 +112,27 @@
     <div class="row">
         <div class="col-md-10 col-md-offset-1">
             <div class="form-group has-feedback">
-                <input type="text" class="form-control input-lg" v-model="keyword" placeholder="年度 学部 科目コード 開講期間 開講科目名 クラス 担当者">
+                <input type="text" class="form-control input-lg" v-model="keyword" placeholder="年度 学部 科目コード 開講期間 開講科目名 クラス 担当者" tabindex="1">
                 <span class="glyphicon glyphicon-search form-control-feedback"></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="row" v-if="hasError">
+        <div class="col-md-10 col-md-offset-1">
+            <div class="alert alert-danger" role="alert">
+                <h4>お探しのキーワードは見つかりませんでした</h4>
+                <p>別のキーワードで再度お探しいただくか，より一般的なキーワードをお試しください．</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row" v-if="hasError">
+        <div class="col-md-10 col-md-offset-1">
+            <div class="alert alert-info" role="alert">
+                <h4>よくある質問</h4>
+                <h5>政策学部 のように検索すると 商学部 の科目が一部混じって表示されてしまう</h5>
+                <p>完全に一致させたい単語は "政策学部" のようにダブルクオテーションで囲みましょう．</p>
             </div>
         </div>
     </div>
@@ -179,7 +198,8 @@
 
             data: {
                 keyword: '',
-                subjects: null
+                subjects: null,
+                hasError: false
             },
 
             filters: {
@@ -219,6 +239,13 @@
                         dataType: "json",
                         success: function (list) {
                             $data.subjects = list['subjects'];
+                            $data.hasError = false;
+                        },
+                        error: function () {
+                            $data.subjects = [];
+                            $data.hasError = true;
+                        },
+                        complete: function () {
                             location.hash = encodeURIComponent($keyword);
                         }
                     });
