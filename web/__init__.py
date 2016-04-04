@@ -14,7 +14,7 @@ def index():
 def search():
     keyword = request.args.get('keyword')
     query = {
-        "size": 50,
+        "size": 200,
         "query": {
             "function_score": {
                 "query": {
