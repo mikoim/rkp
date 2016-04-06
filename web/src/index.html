@@ -150,20 +150,30 @@
 
     <div class="row">
         <div class="col-md-2 col-md-offset-9 text-right">
-            <a href="https://twitter.com/share" class="twitter-share-button" data-url="http://lolcat.miko.im/" data-text="RKPv3を使って同志社大学の良さげな科目を素早く検索しよう！" data-via="comfort_bread" data-size="large" data-hashtags="RKPv3">Tweet</a>
+            <a href="https://twitter.com/share" class="twitter-share-button" data-url="http://lolcat.miko.im/" data-text="RKPv3を使って同志社大学の良さげな科目を素早く検索しよう！" data-via="comfort_bread" data-size="large"
+               data-hashtags="RKPv3">Tweet</a>
         </div>
     </div>
 
     <div class="row">
         <div class="col-md-10 col-md-offset-1">
-            <div class="form-group has-feedback">
-                <input type="text" class="form-control input-lg" v-model="keyword" placeholder="年度 学部 科目コード 開講期間 開講科目名 クラス 担当者" tabindex="1">
-                <span class="glyphicon glyphicon-search form-control-feedback"></span>
-            </div>
+            <form>
+                <div class="form-group has-feedback">
+                    <input type="text" class="form-control input-lg" v-model="keyword" placeholder="年度 学部 科目コード 開講期間 開講科目名 クラス 担当者" tabindex="1">
+                    <span class="glyphicon glyphicon-search form-control-feedback"></span>
+                </div>
+            </form>
         </div>
     </div>
 
-    <div class="row" v-if="hasError">
+    <div class="row">
+        <div class="col-md-10 col-md-offset-1">
+            <button type="button" v-on:click="reverse = false" v-bind:class="{'btn-raised': !reverse}" class="btn btn-success">楽勝(仮)</button>
+            <button type="button" v-on:click="reverse = true" v-bind:class="{'btn-raised': reverse}" class="btn btn-danger">五ヶ年計画</button>
+        </div>
+    </div>
+
+    <div class="row" v-show="hasError">
         <div class="col-md-10 col-md-offset-1">
             <div class="alert alert-danger" role="alert">
                 <h4>お探しのキーワードは見つかりませんでした</h4>
@@ -172,7 +182,7 @@
         </div>
     </div>
 
-    <div class="row" v-if="hasError">
+    <div class="row" v-show="hasError">
         <div class="col-md-10 col-md-offset-1">
             <div class="alert alert-info" role="alert">
                 <h4>よくある質問</h4>
@@ -249,6 +259,7 @@
 
             data: {
                 keyword: '',
+                reverse: false,
                 subjects: null,
                 hasError: false
             },
@@ -272,22 +283,27 @@
                 keyword: function () {
                     this.saveConf();
                     this.search();
+                },
+                reverse: function () {
+                    this.search();
                 }
             },
 
             methods: {
                 search: function () {
                     var $data = this.$data;
-                    var $keyword = this.keyword;
-                    if ($keyword == '' || $keyword == null) {
-                        $keyword = "2015";
+
+                    var $query = {};
+                    $query['keyword'] = $data.keyword;
+                    if ($data.reverse) {
+                        $query['reverse'] = $data.reverse;
                     }
 
                     $.ajax({
-                        type: "GET",
-                        url: "/search",
-                        data: {'keyword': $keyword},
-                        dataType: "json",
+                        type: 'GET',
+                        url: '/search',
+                        data: $query,
+                        dataType: 'json',
                         success: function (list) {
                             $data.subjects = list['subjects'];
                             $data.hasError = false;
@@ -297,14 +313,14 @@
                             $data.hasError = true;
                         },
                         complete: function () {
-                            location.hash = encodeURIComponent($keyword);
+                            location.hash = encodeURIComponent($data.keyword);
                         }
                     });
                 },
 
                 saveConf: function () {
                     if (window.localStorage) {
-                        localStorage.setItem("keyword", this.$data.keyword);
+                        localStorage.setItem('keyword', this.$data.keyword);
                     }
                 },
 
@@ -312,7 +328,7 @@
                     if (window.localStorage) {
                         var $keyword = localStorage.getItem("keyword");
                         if ($keyword == null) {
-                            $keyword = "フランス法";
+                            $keyword = '';
                         }
                         this.$data.keyword = $keyword;
                     }
