@@ -1,26 +1,27 @@
 # RKP
+Course Finder for D05h15h4 University
 
-昔公開していた楽勝般教検索サービスの残骸．
-旧バージョンのクローラが行方不明につき，スキーマが一致しておらずWeb UIの方は使えません．
-アレげな科目の検索についてはSQLを書いてお楽しみください．
-
-## 歴史
+## ChangeLog
+This is not ChangeLog but dark history.
 
 ### RKPv1
-
-PHPで書かれた化石．
-Web フレームワークなど知らぬ．
-一部サークルの新入生の勧誘（履修相談）で活躍．
-MongoDBの正規表現を使って全文検索していた気がする．
+ - This version written in plain PHP
+ - Released for some clubs and they were happy
+ - Used MongoDB regex search for full text search
 
 ### RKPv2
+ - Rewrote crawler in Python.
+   - Can't remember original version... PHP?
+ - Added best cost performance lunch boxes (Honkekamadoya, HottoMotto)
 
-クローラーがPythonになった．
-そもそも元のクローラーが何で書かれていたのかすら不明．
-某持ち帰り弁当チェーンのコスパランキングが実装されるなど迷走を極める．
+### RKPv3
+ - Rewrote front-end in vue.js
+ - Rewrote backend in Python
+ - Migrated temporary database to MySQL
+ - Migrated full text search to Elasticsearch
 
-### RKPv3 (予定)
+### RKPv4 (future?)
+ - No more RKP
 
-Python + Elasticsearchだけになるらしい．
-そもそもWeb UIなんていらないでしょ，Web UI廃止の予感．
-もはや，今更実装する必要無いよね．
+## Demo
+![RKPv3 Demo](demo.gif)
