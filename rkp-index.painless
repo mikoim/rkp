@@ -1,0 +1,5 @@
+params.weight_a * doc['grade.a'].value * doc['number_participants'].value +
+params.weight_b * doc['grade.b'].value * doc['number_participants'].value +
+params.weight_c * doc['grade.c'].value * doc['number_participants'].value +
+params.weight_d * doc['grade.d'].value * doc['number_participants'].value +
+params.weight_f * doc['grade.f'].value * doc['number_participants'].value

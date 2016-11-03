@@ -15,7 +15,7 @@ def search():
     keyword = request.args.get('keyword', default='', type=str)
     limit = request.args.get('limit', default=100, type=int)
     reverse = request.args.get('reverse', default=False, type=bool)
-    
+
     if limit > 100:
         limit = 100
 
@@ -34,7 +34,7 @@ def search():
                     {
                         'script_score': {
                             'script': {
-                                'lang': 'groovy',
+                                'lang': 'painless',
                                 'file': 'rkp-index',
                                 'params': {
                                     'weight_a': 3,
@@ -55,7 +55,7 @@ def search():
         query['sort'] = [
             {
                 '_score': {
-                    'reverse': True
+                    'order': 'asc'
                 }
             }
         ]

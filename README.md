@@ -18,7 +18,12 @@ This is not ChangeLog but dark history.
  - Rewrote front-end in vue.js
  - Rewrote backend in Python
  - Migrated temporary database to MySQL
- - Migrated full text search to Elasticsearch
+ - Migrated full text search to Elasticsearch 5.x
+
+#### Requirements
+ - Python 3.x
+ - Elasticsearch 5.x
+ - MySQL 5.x
 
 ### RKPv4 (future?)
  - No more RKP
